@@ -5,3 +5,5 @@ const topic = process.env.ASB_TOPIC
 const subscription = process.env.ASB_SUB
 const sbClient = new ServiceBusClient(connectionString)
 const receiever = sbClient.createReceiver(topic, subscription)
+
+const receiveFromTopic = async () => {}
