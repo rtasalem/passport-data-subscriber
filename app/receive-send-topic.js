@@ -5,21 +5,26 @@ const topicReceiver = process.env.ASB_TOPIC_RECEIVER
 const subscriptionReceiver = process.env.ASB_SUB_RECEIVER
 const sbClient = new ServiceBusClient(connectionString)
 const receiver = sbClient.createReceiver(topicReceiver, subscriptionReceiver)
+const topicSender = process.env.ASB_TOPIC_SENDER
+const subscriptionSender = process.env.ASB_SUB_SENDER
+const sender = sbClient.createSender(topicSender, subscriptionSender)
 
-const receiveFromTopic = async () => {
+const receiveFromSendToTopic = async () => {
   try {
     const handleMessage = async (message) => {
-      const { firstName, lastName } = JSON.parse(message.body)
+      await sender.sendMessages({
+        body: message.body
+      })
       console.log(
-        `New message received from ${topicReceiver} containing details of ${firstName} ${lastName}`
+        `New message received from ${topicReceiver} (subscription: ${subscriptionReceiver}) and sent to ${topicSender} (subscription: ${subscriptionSender})`
       )
     }
 
     const handleError = async (error) => {
-      console.error(`Error occurred: ${error}`)
+      console.error(error)
     }
 
-    await receiver.subscribe({
+    receiver.subscribe({
       processMessage: handleMessage,
       processError: handleError
     })
@@ -29,8 +34,9 @@ const receiveFromTopic = async () => {
     console.error(`Error: ${error}`)
   } finally {
     await receiver.close()
+    await sender.close()
     await sbClient.close()
   }
 }
 
-module.exports = receiveFromTopic
+module.exports = receiveFromSendToTopic
