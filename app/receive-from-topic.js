@@ -1,56 +1,34 @@
 const { delay, ServiceBusClient } = require('@azure/service-bus')
 
 const connectionString = process.env.ASB_CONN_STR
-const topic = process.env.ASB_TOPIC
-const subscription = process.env.ASB_SUB
+const topicReceiver = process.env.ASB_TOPIC_RECEIVER
+const subscriptionReceiver = process.env.ASB_SUB_RECEIVER
 const sbClient = new ServiceBusClient(connectionString)
-let receiver
+const receiver = sbClient.createReceiver(topicReceiver, subscriptionReceiver)
+const topicSender = process.env.ASB_TOPIC_SENDER
+const subscriptionSendfer = process.env.ASB_SUB_SENDER
+const sender = sbClient.createSender(topicSender)
 
 const receiveFromTopic = async () => {
-  try {
-    if (!receiver) {
-      receiver = sbClient.createReceiver(topic, subscription)
+  const handleMessage = async (message) => {
+    await sender.sendMessages({
+      body: message.body
+    })
+    console.log(
+      `New message received from ${topicReceiver} (subscription: ${subscriptionReceiver}) and sent to ${topicSender} (subscription: ${subscriptionSendfer})`
+    )
+  }
 
-      const handleMessage = async (message) => {
-        await receiver.receiveMessages({
-          body: message.body
-        })
-        console.log(
-          `Messages have been received from the ${topic}: ${message.body}`
-        )
-      }
-
-      const handleError = async (error) => {
-        console.error(error)
-      }
-
-      receiver.subscribe({
-        processMessage: handleMessage,
-        processError: handleError
-      })
-
-      await delay(10000)
-    }
-  } catch (error) {
+  const handleError = async (error) => {
     console.error(error)
-  } finally {
-    await receiver.close()
-    await sbClient.close()
   }
-}
 
-const restartReceiver = async () => {
-  try {
-    await receiver.close()
-    receiver = null
-    console.log('Receiver closed. Restarting...')
-    await receiveFromTopic()
-  } catch (error) {
-    console.error('Error occurred while restarting receiver:', error)
-  } finally {
-    await receiver.close()
-    await sbClient.close()
-  }
+  receiver.subscribe({
+    processMessage: handleMessage,
+    processError: handleError
+  })
+
+  await delay(10000)
 }
 
 module.exports = receiveFromTopic
