@@ -17,6 +17,6 @@ ASB_CONN_STR=
 ASB_TOPIC_RECEIVER=
 ASB_SUB_RECEIVER=
 ASB_TOPIC_SENDER=
-ASB_SUB_SENDER=p
+ASB_SUB_SENDER=
 ```
 Note that the `ASB_TOPIC_SENDER` and the `ASB_SUB_SENDER` variables are optional and a second topic/subscription only needs to be created if you wish to send the received messages to another topic.
